@@ -11,6 +11,12 @@ endif()
 # 学习程序：目前只输出一句话。
 add_executable(hello_world examples/hello_world.cpp)
 
+# 教学算法代码：当前只包含 V0.1-1 的 Vec3。
+add_library(tetra_core INTERFACE)
+target_include_directories(tetra_core INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+add_executable(test_vec3 tests/test_vec3.cpp)
+target_link_libraries(test_vec3 PRIVATE tetra_core)
+
 # TetGen 是本地参考材料，不随本教学仓库上传。存在时才构建其演示目标。
 set(TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/reference/tetgen")
 if(EXISTS "${TETGEN_DIR}/tetgen.cxx")
@@ -37,6 +43,8 @@ endif()
 enable_testing()
 add_test(NAME hello_world COMMAND hello_world)
 set_tests_properties(hello_world PROPERTIES PASS_REGULAR_EXPRESSION "Hello, tetrahedral mesh!")
+add_test(NAME vec3 COMMAND test_vec3)
+set_tests_properties(vec3 PROPERTIES PASS_REGULAR_EXPRESSION "Vec3 tests passed")
 if(TARGET tetgen_smoke)
   add_test(NAME tetgen_library_smoke COMMAND tetgen_smoke)
 endif()

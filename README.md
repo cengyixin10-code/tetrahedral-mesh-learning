@@ -57,8 +57,9 @@ powershell -ExecutionPolicy Bypass -File .\build-and-test.ps1
 | 阶段 | 状态 | 你要验证的内容 |
 |---|---|---|
 | V0.1-1 Vec3 | 已实现，等待你测试 | 向量代数、右手定则、标量三重积 |
-| V0.1-2 Vertex | 未开始 | 点编号与坐标 |
-| V0.1-3 Tetrahedron | 未开始 | 四个顶点和四个面 |
+| V0.1-2 Vertex | 已实现 | 点编号与坐标 |
+| V0.1-3 Tetrahedron | 已实现 | 四个顶点和四个面 |
+| V0.1-4 Mesh | 已实现 | 存储、稳定编号和失效标记 |
 
 基础点集算法之后才讨论：封闭表面、边界恢复、内部区域提取、质量细化和优化。仅对点集做 Delaunay 会填充其凸包，不会自动识别凹形实体或孔洞。
 
@@ -75,3 +76,4 @@ powershell -ExecutionPolicy Bypass -File .\build-and-test.ps1
 - 授权文件保留在 reference/tetgen/LICENSE（AGPLv3 / 商业双重许可说明）。
 
 安装和实际验证状态请看 ENVIRONMENT.md；以其中记录为准，不能把“准备好了构建文件”理解为“编译已经通过”。
+

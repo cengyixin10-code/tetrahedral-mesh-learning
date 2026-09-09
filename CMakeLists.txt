@@ -11,8 +11,11 @@ endif()
 # 学习程序：目前只输出一句话。
 add_executable(hello_world examples/hello_world.cpp)
 
-# 教学算法代码：Vec3、Vertex、Tetrahedron 和 Mesh。
-add_library(tetra_core src/geometry/Mesh.cpp)
+# 教学算法代码：基础数据结构和 orient3d。
+add_library(tetra_core
+  src/geometry/Mesh.cpp
+  src/predicates/Orientation.cpp
+)
 target_include_directories(tetra_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 add_executable(test_vec3 tests/test_vec3.cpp)
 target_link_libraries(test_vec3 PRIVATE tetra_core)

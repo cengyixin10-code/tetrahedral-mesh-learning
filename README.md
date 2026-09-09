@@ -60,6 +60,7 @@ powershell -ExecutionPolicy Bypass -File .\build-and-test.ps1
 | V0.1-2 Vertex | 已实现 | 点编号与坐标 |
 | V0.1-3 Tetrahedron | 已实现 | 四个顶点和四个面 |
 | V0.1-4 Mesh | 已实现 | 存储、稳定编号和失效标记 |
+| V0.1-5 orient3d | 已实现，尚未测试 | 有向体积和点位于平面的哪一侧 |
 
 基础点集算法之后才讨论：封闭表面、边界恢复、内部区域提取、质量细化和优化。仅对点集做 Delaunay 会填充其凸包，不会自动识别凹形实体或孔洞。
 

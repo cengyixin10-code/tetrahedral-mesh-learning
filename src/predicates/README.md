@@ -19,3 +19,5 @@ orient3d = (ab × ac) · ad
 当前版本直接使用 `double`，目的是先看清算法。它还不是 TetGen 使用的自适应精确几何判断：点非常接近共面时，浮点舍入可能让符号不可靠。这个问题在基础 Bowyer-Watson 跑通后再单独处理。
 
 下一步 `InSphere.hpp/.cpp` 将判断一个点位于四面体外接球的内部、外部还是球面上。
+
+`examples/orient3d_demo.cpp` 给定四个简单坐标，打印 `orient3d` 返回值和四面体体积。它用于观察计算结果，没有复杂的自动断言。

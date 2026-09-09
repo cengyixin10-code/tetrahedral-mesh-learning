@@ -20,6 +20,10 @@ target_include_directories(tetra_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 add_executable(test_vec3 tests/test_vec3.cpp)
 target_link_libraries(test_vec3 PRIVATE tetra_core)
 
+# V0.1-5 的直观演示：给定四个点，打印 orient3d 的计算结果。
+add_executable(orient3d_demo examples/orient3d_demo.cpp)
+target_link_libraries(orient3d_demo PRIVATE tetra_core)
+
 # TetGen 是本地参考材料，不随本教学仓库上传。存在时才构建其演示目标。
 set(TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/reference/tetgen")
 if(EXISTS "${TETGEN_DIR}/tetgen.cxx")

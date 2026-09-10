@@ -14,6 +14,7 @@ add_executable(hello_world examples/hello_world.cpp)
 # 教学算法代码：基础数据结构、几何判断和网格生成步骤。
 add_library(tetra_core
   src/geometry/Mesh.cpp
+  src/meshing/FindBadTetrahedra.cpp
   src/meshing/SuperTetrahedron.cpp
   src/predicates/InSphere.cpp
   src/predicates/Orientation.cpp
@@ -33,6 +34,10 @@ target_link_libraries(insphere_demo PRIVATE tetra_core)
 # V0.1-7 的直观演示：创建一个包住全部输入点的超级四面体。
 add_executable(super_tetrahedron_demo examples/super_tetrahedron_demo.cpp)
 target_link_libraries(super_tetrahedron_demo PRIVATE tetra_core)
+
+# V0.1-8 的直观演示：找出外接球包含新点的坏四面体。
+add_executable(find_bad_tetrahedra_demo examples/find_bad_tetrahedra_demo.cpp)
+target_link_libraries(find_bad_tetrahedra_demo PRIVATE tetra_core)
 
 # TetGen 是本地参考材料，不随本教学仓库上传。存在时才构建其演示目标。
 set(TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/reference/tetgen")

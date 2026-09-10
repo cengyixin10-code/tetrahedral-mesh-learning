@@ -30,12 +30,14 @@
 <body>
 <main>
   <h1>Bowyer-Watson：逐点生成四面体网格</h1>
-  <p class="hint">先完成前三步，然后反复点击蓝色按钮。按住画面拖动可以旋转。</p>
+  <p class="hint">先观察几何体怎样变成离散点，再反复点击蓝色按钮。按住画面拖动可以旋转。</p>
 
   <div class="controls">
-    <button id="shapeButton">1　生成复杂点集</button>
-    <button id="boxButton" disabled>2　生成包围盒</button>
-    <button id="superButton" disabled>3　生成超级四面体</button>
+    <button id="shapeButton">1　生成复杂几何体</button>
+    <button id="surfaceButton" disabled>2　拆解出表面点集</button>
+    <button id="interiorButton" disabled>3　生成内部候选点</button>
+    <button id="boxButton" disabled>4　生成包围盒</button>
+    <button id="superButton" disabled>5　生成超级四面体</button>
     <button id="nextButton" disabled>开始插入第一个点</button>
   </div>
 
@@ -49,9 +51,11 @@
 
   <canvas id="view"></canvas>
   <div class="bottom">
-    <div id="status">请先生成复杂点集。</div>
+    <div id="status">请先生成复杂几何体。</div>
     <div class="legend">
-      <span style="--c:#65748a">未插入点</span>
+      <span style="--c:#4f83cc">几何表面</span>
+      <span style="--c:#65748a">表面点</span>
+      <span style="--c:#9a45bd">内部候选点</span>
       <span style="--c:#2768c7">当前网格</span>
       <span style="--c:#d83f58">坏四面体</span>
       <span style="--c:#e58a19">空腔边界</span>
@@ -63,29 +67,61 @@
 <script>
 const canvas=document.getElementById('view'), ctx=canvas.getContext('2d');
 const shapeButton=document.getElementById('shapeButton');
+const surfaceButton=document.getElementById('surfaceButton');
+const interiorButton=document.getElementById('interiorButton');
 const boxButton=document.getElementById('boxButton');
 const superButton=document.getElementById('superButton');
 const nextButton=document.getElementById('nextButton');
 const status=document.getElementById('status');
 const stages=[...document.querySelectorAll('.stage')];
 
-let input=[], box=[], superPoints=[], meshPoints=[], tetrahedra=[];
+let surfacePoints=[], interiorPoints=[], surfaceFaces=[], input=[], box=[], superPoints=[], meshPoints=[], tetrahedra=[];
 let bad=[], cavity=[], newTets=[], inserted=0, current=-1, phase='setup';
-let showBox=false, showSuper=false, angleX=-0.35, angleY=0.55, dragging=false, lastX=0, lastY=0;
+let showGeometry=false, showSurface=false, showInterior=false, showBox=false, showSuper=false;
+let angleX=-0.35, angleY=0.55, dragging=false, lastX=0, lastY=0;
 
-// 固定点集便于反复观察相同过程；这些点构成一个不规则三维形状。
+// 第一步：显示一个不规则封闭几何体。
+// 在真实程序中，这些面来自 STEP 文件里的曲面和拓扑。
 function makeInput(){
-  input=[
+  surfacePoints=[
     {x:-1.35,y:-.55,z:-.35},{x:1.25,y:-.65,z:-.25},{x:1.05,y:.85,z:-.45},{x:-1.15,y:.95,z:-.2},
-    {x:-.85,y:-.45,z:1.05},{x:.9,y:-.35,z:1.25},{x:.65,y:.8,z:.85},{x:-.7,y:.65,z:1.3},
+    {x:-.85,y:-.45,z:1.05},{x:.9,y:-.35,z:1.25},{x:.65,y:.8,z:.85},{x:-.7,y:.65,z:1.3}
+  ];
+  interiorPoints=[
     {x:0,y:0,z:.25},{x:.25,y:-.1,z:.7},{x:-.3,y:.25,z:.55},{x:.15,y:.45,z:-.05}
   ];
+  surfaceFaces=[
+    [0,2,1],[0,3,2],[4,5,6],[4,6,7],
+    [0,1,5],[0,5,4],[1,2,6],[1,6,5],
+    [2,3,7],[2,7,6],[3,0,4],[3,4,7]
+  ];
+  input=[];
   box=[]; superPoints=[]; meshPoints=[]; tetrahedra=[]; bad=[]; cavity=[]; newTets=[];
-  inserted=0; current=-1; phase='setup'; showBox=false; showSuper=false;
-  boxButton.disabled=false; superButton.disabled=true; nextButton.disabled=true;
+  inserted=0; current=-1; phase='setup';
+  showGeometry=true; showSurface=false; showInterior=false; showBox=false; showSuper=false;
+  surfaceButton.disabled=false; interiorButton.disabled=true; boxButton.disabled=true;
+  superButton.disabled=true; nextButton.disabled=true;
   nextButton.textContent='开始插入第一个点';
   setStage('');
-  status.textContent=`已生成 ${input.length} 个输入点。灰点目前还不是网格顶点。`;
+  status.textContent='蓝色面片代表 STEP 曲面组成的封闭几何外形，此时还没有体网格节点。';
+  draw();
+}
+
+// 第二步：把连续曲面离散成表面节点。
+function extractSurface(){
+  input=surfacePoints.map(p=>({...p}));
+  showSurface=true;
+  interiorButton.disabled=false;
+  status.textContent=`曲面已离散为 ${surfacePoints.length} 个灰色表面点，它们全部位于几何边界上。`;
+  draw();
+}
+
+// 第三步：在实体内部补充候选点。
+function makeInterior(){
+  input=[...surfacePoints.map(p=>({...p})),...interiorPoints.map(p=>({...p}))];
+  showInterior=true;
+  boxButton.disabled=false;
+  status.textContent=`加入 ${interiorPoints.length} 个紫色内部候选点，后面会同时插入表面点和内部点。`;
   draw();
 }
 
@@ -222,8 +258,34 @@ function dotMark(p,color,r,label=''){
 }
 function draw(){
   ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
-  if(!input.length)return;
-  input.forEach((p,i)=>{if(i>=inserted && !(current>=0&&i===inserted))dotMark(p,'#65748a',4);});
+  if(!surfacePoints.length)return;
+
+  // 几何体先以连续表面的形式出现。开始插点后将表面淡化，便于观察内部网格。
+  if(showGeometry){
+    const ordered=surfaceFaces.map(face=>({
+      face,
+      depth:face.reduce((sum,i)=>sum+rotate(surfacePoints[i]).z,0)/3
+    })).sort((a,b)=>a.depth-b.depth);
+    for(const item of ordered){
+      const p=item.face.map(i=>project(surfacePoints[i]));
+      ctx.fillStyle=meshPoints.length?'rgba(79,131,204,.06)':'rgba(79,131,204,.30)';
+      ctx.strokeStyle=meshPoints.length?'rgba(55,91,142,.13)':'rgba(55,91,142,.55)';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);ctx.lineTo(p[1].x,p[1].y);ctx.lineTo(p[2].x,p[2].y);ctx.closePath();ctx.fill();ctx.stroke();
+    }
+  }
+
+  if(showSurface){
+    surfacePoints.forEach((p,i)=>{
+      if(i>=inserted && !(current>=0&&i===inserted)) dotMark(p,'#65748a',5);
+    });
+  }
+  if(showInterior){
+    interiorPoints.forEach((p,j)=>{
+      const i=surfacePoints.length+j;
+      if(i>=inserted && !(current>=0&&i===inserted)) dotMark(p,'#9a45bd',5);
+    });
+  }
   if(showBox){
     const old=meshPoints; meshPoints=box;
     [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>edge(e[0],e[1],'#e58a19',1.8));
@@ -243,7 +305,12 @@ function draw(){
   if(showSuper) superPoints.forEach((p,i)=>dotMark(p,'#d83f58',5,'S'+i));
 }
 
-shapeButton.onclick=makeInput; boxButton.onclick=makeBox; superButton.onclick=makeSuper; nextButton.onclick=advance;
+shapeButton.onclick=makeInput;
+surfaceButton.onclick=extractSurface;
+interiorButton.onclick=makeInterior;
+boxButton.onclick=makeBox;
+superButton.onclick=makeSuper;
+nextButton.onclick=advance;
 canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!dragging)return;angleY+=(e.clientX-lastX)*.01;angleX+=(e.clientY-lastY)*.01;lastX=e.clientX;lastY=e.clientY;draw();});
 canvas.addEventListener('pointerup',()=>dragging=false);
